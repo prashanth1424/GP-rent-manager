@@ -1,0 +1,49 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.titleGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--gold);
+  margin: 0;
+}
+
+.phone {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.95rem;
+}
+
+.roomInfo {
+  display: flex;
+  justify-content: space-between;
+}
+
+.roomLabel {
+  color: var(--text-secondary);
+}
+
+.roomName {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.unassigned {
+  color: var(--status-vacant);
+  font-style: italic;
+}

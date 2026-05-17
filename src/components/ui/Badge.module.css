@@ -1,0 +1,60 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.paid {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: var(--status-paid);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.pending {
+  background-color: rgba(201, 168, 76, 0.15);
+  color: var(--status-pending);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+}
+
+.overdue {
+  background-color: rgba(224, 82, 82, 0.15);
+  color: var(--status-overdue);
+  border: 1px solid rgba(224, 82, 82, 0.3);
+}
+
+.vacant {
+  background-color: rgba(85, 85, 85, 0.15);
+  color: var(--status-vacant);
+  border: 1px solid rgba(85, 85, 85, 0.3);
+}
+
+.advance {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: var(--status-paid);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.active {
+  background-color: rgba(76, 175, 80, 0.15);
+  color: var(--status-paid);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.vacated {
+  background-color: rgba(85, 85, 85, 0.15);
+  color: var(--status-vacant);
+  border: 1px solid rgba(85, 85, 85, 0.3);
+}
+
+.partial {
+  background-color: rgba(201, 168, 76, 0.15);
+  color: var(--status-pending);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+}

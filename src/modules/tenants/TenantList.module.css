@@ -1,0 +1,29 @@
+.container {
+  padding: 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 20px;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.emptyStateIcon {
+  color: var(--border);
+  margin-bottom: 16px;
+}
+
+.emptyStateText {
+  margin-bottom: 24px;
+}

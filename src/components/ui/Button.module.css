@@ -1,0 +1,63 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.primary {
+  background-color: transparent;
+  color: var(--gold);
+  border: 1px solid var(--gold);
+}
+
+.primary:hover:not(:disabled) {
+  background-color: rgba(201, 168, 76, 0.1);
+  box-shadow: 0 0 10px rgba(201, 168, 76, 0.2);
+}
+
+.secondary {
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--text-secondary);
+  background-color: var(--bg-elevated);
+}
+
+.ghost {
+  background-color: transparent;
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+
+.ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.danger {
+  background-color: transparent;
+  color: var(--status-overdue);
+  border: 1px solid var(--status-overdue);
+}
+
+.danger:hover:not(:disabled) {
+  background-color: rgba(224, 82, 82, 0.1);
+}
+
+.iconOnly {
+  padding: 8px;
+}
