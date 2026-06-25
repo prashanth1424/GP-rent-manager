@@ -30,11 +30,11 @@ export const prorateRent = (agreedRent, daysOccupied, daysInMonth) => {
 };
 
 // Generates bill charges for a room + month
-export const generateCharges = (tenancies, roomId, month, utilities) => {
+export const generateCharges = (tenancies, roomId, month, utilities, utilitiesEnteredDate) => {
   const activeTenancies = getTenantsForRoomInMonth(tenancies, roomId, month);
   const daysInMonth = getDaysInMonth(month);
   
-  const totalUtility = (utilities.electricity || 0) + (utilities.water || 0) + (utilities.other || 0);
+  const totalUtility = utilitiesEnteredDate ? (utilities.electricity || 0) + (utilities.water || 0) + (utilities.other || 0) : 0;
   
   const activeCount = activeTenancies.length;
   const utilityShare = activeCount > 0 ? totalUtility / activeCount : 0;
@@ -61,39 +61,72 @@ export const isRoomAvailable = (tenancies, roomId, roomType) => {
 };
 
 export const getPaymentStatus = (bill, tenantId, tenancy) => {
-  // Check if paid in advance
+  const result = { rentStatus: "pending", utilityStatus: "not_billed" };
+  
+  if (!bill) return result;
+  
+  const tenantCharge = bill.charges.find(c => c.tenantId === tenantId);
+  if (!tenantCharge) return result;
+
+  // Rent status
+  let rentStatus = "pending";
   if (tenancy && tenancy.advanceMonths > 0) {
-    // Basic logic: count months from startDate
-    // Need a robust way to check if 'month' falls within the first N months of startDate
     const start = new Date(tenancy.startDate);
     const [year, monthNum] = bill.month.split('-').map(Number);
     const billDate = new Date(year, monthNum - 1, 1);
     
     const monthDiff = (billDate.getFullYear() - start.getFullYear()) * 12 + (billDate.getMonth() - start.getMonth());
     if (monthDiff >= 0 && monthDiff < tenancy.advanceMonths) {
-      return "advance";
+      rentStatus = "advance";
     }
   }
 
-  if (!bill) return "pending";
+  let rentPaid = 0;
+  let utilityPaid = 0;
   
-  const tenantCharge = bill.charges.find(c => c.tenantId === tenantId);
-  if (!tenantCharge) return "pending"; // Shouldn't happen if they are active
-  
-  const totalPaid = bill.payments
-    .filter(p => p.tenantId === tenantId)
-    .reduce((sum, p) => sum + p.amount, 0);
-    
-  if (totalPaid >= tenantCharge.total) return "paid";
-  if (totalPaid > 0) return "partial";
-  
-  // If no payment and it's past the month, it's overdue. 
-  // Simplified logic: just check if month is in the past.
-  const now = new Date();
-  const [bYear, bMonth] = bill.month.split('-').map(Number);
-  if (now.getFullYear() > bYear || (now.getFullYear() === bYear && now.getMonth() + 1 > bMonth)) {
-    return "overdue";
+  bill.payments.filter(p => p.tenantId === tenantId).forEach(p => {
+    if (p.appliesTo === 'rent') rentPaid += p.amount;
+    else if (p.appliesTo === 'utility') utilityPaid += p.amount;
+    else {
+      const remainingRent = tenantCharge.baseRent - rentPaid;
+      if (remainingRent > 0) {
+        const toRent = Math.min(remainingRent, p.amount);
+        rentPaid += toRent;
+        utilityPaid += (p.amount - toRent);
+      } else {
+        utilityPaid += p.amount;
+      }
+    }
+  });
+
+  if (rentStatus !== "advance") {
+    if (rentPaid >= tenantCharge.baseRent) rentStatus = "paid";
+    else if (rentPaid > 0) rentStatus = "partial";
+    else {
+      const now = new Date();
+      const [bYear, bMonth] = bill.month.split('-').map(Number);
+      if (now.getFullYear() > bYear || (now.getFullYear() === bYear && now.getMonth() + 1 > bMonth)) {
+        rentStatus = "overdue";
+      }
+    }
   }
-  
-  return "pending";
+  result.rentStatus = rentStatus;
+
+  if (!bill.utilitiesEnteredDate) {
+    result.utilityStatus = "not_billed";
+  } else {
+    if (utilityPaid >= tenantCharge.utilityShare && tenantCharge.utilityShare > 0) result.utilityStatus = "paid";
+    else if (utilityPaid > 0) result.utilityStatus = "partial";
+    else {
+      const now = new Date();
+      const [bYear, bMonth] = bill.month.split('-').map(Number);
+      if (now.getFullYear() > bYear || (now.getFullYear() === bYear && now.getMonth() + 1 > bMonth)) {
+        result.utilityStatus = "overdue";
+      } else {
+        result.utilityStatus = "pending";
+      }
+    }
+  }
+
+  return result;
 };

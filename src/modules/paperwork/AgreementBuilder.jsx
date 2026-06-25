@@ -15,7 +15,7 @@ export const AgreementBuilder = ({ tenancies, rooms, tenants, settings }) => {
     const tenant = tenants.find(user => user.id === t.tenantId);
     const room = rooms.find(r => r.id === t.roomId);
     return {
-      label: `${tenant ? tenant.name : 'Unknown'} - ${room ? room.name : 'Unknown'}`,
+      label: `${tenant ? tenant.name : 'Unknown'} - ${room ? `${room.name} (Floor ${room.floor})` : 'Unknown'}`,
       value: t.id
     };
   });

@@ -19,7 +19,8 @@ export const BillEntryForm = ({ room, month, existingBill, previousMonthMeterRea
       currentMeter: Number(formData.currentMeter) || 0,
       electricity: calculatedElectricity,
       water: 0,
-      other: Number(formData.other) || 0
+      other: Number(formData.other) || 0,
+      isEntered: formData.currentMeter !== '' || formData.other !== ''
     });
   };
 

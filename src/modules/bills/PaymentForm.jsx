@@ -1,13 +1,39 @@
 import React, { useState } from 'react';
 import { Input } from '../../components/ui/Input';
+import { Select } from '../../components/ui/Select';
 import { Button } from '../../components/ui/Button';
 import styles from './PaymentForm.module.css';
 
-export const PaymentForm = ({ tenantName, amountDue, amountPaid, onSave, onCancel }) => {
-  const remaining = amountDue - amountPaid;
+export const PaymentForm = ({ bill, tenantId, onSave, onCancel }) => {
+  const charge = bill.charges.find(c => c.tenantId === tenantId);
+  const payments = bill.payments.filter(p => p.tenantId === tenantId);
+
+  let rentPaid = 0;
+  let utilityPaid = 0;
+  payments.forEach(p => {
+    if (p.appliesTo === 'rent') rentPaid += p.amount;
+    else if (p.appliesTo === 'utility') utilityPaid += p.amount;
+    else {
+      const remainingRent = charge.baseRent - rentPaid;
+      if (remainingRent > 0) {
+        const toRent = Math.min(remainingRent, p.amount);
+        rentPaid += toRent;
+        utilityPaid += (p.amount - toRent);
+      } else {
+        utilityPaid += p.amount;
+      }
+    }
+  });
+
+  const rentRemaining = Math.max(0, charge.baseRent - rentPaid);
+  const utilitiesEntered = !!bill.utilitiesEnteredDate;
+  const utilityRemaining = utilitiesEntered ? Math.max(0, charge.utilityShare - utilityPaid) : 0;
+  const totalRemaining = rentRemaining + utilityRemaining;
+
   const [formData, setFormData] = useState({
-    amount: remaining.toString(),
+    amount: totalRemaining.toString(),
     date: new Date().toISOString().split('T')[0],
+    appliesTo: 'both',
     note: ''
   });
 
@@ -25,11 +51,40 @@ export const PaymentForm = ({ tenantName, amountDue, amountPaid, onSave, onCance
   const handleSubmit = (e) => {
     e.preventDefault();
     if (validate()) {
-      onSave({
-        amount: Number(formData.amount),
-        date: formData.date,
-        note: formData.note
-      });
+      const amt = Number(formData.amount);
+      if (formData.appliesTo === 'both') {
+        let amountToProcess = amt;
+        const paymentsToSave = [];
+        
+        if (rentRemaining > 0 && amountToProcess > 0) {
+          const toRent = Math.min(rentRemaining, amountToProcess);
+          paymentsToSave.push({
+            amount: toRent,
+            date: formData.date,
+            appliesTo: 'rent',
+            note: formData.note
+          });
+          amountToProcess -= toRent;
+        }
+        
+        if (amountToProcess > 0) {
+          paymentsToSave.push({
+            amount: amountToProcess,
+            date: formData.date,
+            appliesTo: 'utility',
+            note: formData.note
+          });
+        }
+        
+        onSave(paymentsToSave);
+      } else {
+        onSave([{
+          amount: amt,
+          date: formData.date,
+          appliesTo: formData.appliesTo,
+          note: formData.note
+        }]);
+      }
     }
   };
 
@@ -37,18 +92,29 @@ export const PaymentForm = ({ tenantName, amountDue, amountPaid, onSave, onCance
     <form className={styles.form} onSubmit={handleSubmit}>
       <div className={styles.summary}>
         <div className={styles.summaryRow}>
-          <span>Total Bill:</span>
-          <span>₹{amountDue.toLocaleString()}</span>
+          <span>Rent Remaining:</span>
+          <span>₹{rentRemaining.toLocaleString()}</span>
         </div>
         <div className={styles.summaryRow}>
-          <span>Amount Paid:</span>
-          <span>₹{amountPaid.toLocaleString()}</span>
+          <span>Utility Remaining:</span>
+          <span>{utilitiesEntered ? `₹${utilityRemaining.toLocaleString()}` : 'Not Billed Yet'}</span>
         </div>
-        <div className={styles.summaryRow}>
-          <span>Remaining Balance:</span>
-          <span>₹{remaining.toLocaleString()}</span>
+        <div className={styles.summaryRow} style={{ fontWeight: 'bold', borderTop: '1px solid var(--border)', paddingTop: '8px', marginTop: '8px' }}>
+          <span>Total Remaining:</span>
+          <span>₹{totalRemaining.toLocaleString()}</span>
         </div>
       </div>
+
+      <Select
+        label="Payment Applies To"
+        value={formData.appliesTo}
+        onChange={(e) => setFormData({ ...formData, appliesTo: e.target.value })}
+        options={[
+          { label: 'Both (Auto-Split)', value: 'both' },
+          { label: 'Rent Only', value: 'rent' },
+          { label: 'Utility Only', value: 'utility' }
+        ]}
+      />
 
       <Input
         label="Payment Amount (₹)"

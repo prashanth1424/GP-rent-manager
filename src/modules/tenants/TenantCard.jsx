@@ -20,7 +20,7 @@ export const TenantCard = ({ tenant, activeTenancy, room, onClick }) => {
         <div className={styles.roomInfo}>
           <span className={styles.roomLabel}>Current Room:</span>
           {activeTenancy && room ? (
-            <span className={styles.roomName}>{room.name}</span>
+            <span className={styles.roomName}>{room.name} <span style={{opacity: 0.7}}>(Floor {room.floor})</span></span>
           ) : (
             <span className={styles.unassigned}>None</span>
           )}

@@ -106,7 +106,7 @@ export const AssignRoomModal = ({ isOpen, onClose, tenant, rooms, tenancies, onA
           onChange={(e) => setFormData({ ...formData, roomId: e.target.value })}
           options={[
             { label: '-- Choose a Room --', value: '' },
-            ...availableRooms.map(r => ({ label: `${r.name} (${r.type.toUpperCase()})`, value: r.id }))
+            ...availableRooms.map(r => ({ label: `${r.name} - Floor ${r.floor} (${r.type.toUpperCase()})`, value: r.id }))
           ]}
           error={errors.roomId}
         />

@@ -23,7 +23,7 @@ export const BillSummaryCard = ({ room, bill, tenants, tenancies, onEdit, onReco
   return (
     <Card>
       <div className={styles.header}>
-        <h3 className={styles.title}>{room.name}</h3>
+        <h3 className={styles.title}>{room.name} <span style={{fontSize: '0.8rem', opacity: 0.7, fontWeight: 'normal'}}> - Floor {room.floor}</span></h3>
         {isVacant ? (
           <Badge variant="vacant">VACANT</Badge>
         ) : (
@@ -61,12 +61,19 @@ export const BillSummaryCard = ({ room, bill, tenants, tenancies, onEdit, onReco
 
           <div className={styles.tenantSection}>
             {bill.charges.map((charge, idx) => {
-              const status = getPaymentStatus(bill, charge.tenantId, getTenancy(charge.tenantId));
+              const statuses = getPaymentStatus(bill, charge.tenantId, getTenancy(charge.tenantId));
+              const rentStatus = statuses.rentStatus;
+              const utilityStatus = statuses.utilityStatus;
+              const showPaymentButton = rentStatus !== 'paid' && rentStatus !== 'advance' || (utilityStatus !== 'not_billed' && utilityStatus !== 'paid');
+              
               return (
                 <div key={idx} className={styles.tenantBlock}>
                   <div className={styles.tenantHeader}>
                     <span>{getTenantName(charge.tenantId)}</span>
-                    <Badge variant={status}>{status.toUpperCase()}</Badge>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <Badge variant={rentStatus}>RENT: {rentStatus.toUpperCase()}</Badge>
+                      <Badge variant={utilityStatus}>UTIL: {utilityStatus.toUpperCase().replace('_', ' ')}</Badge>
+                    </div>
                   </div>
                   <div className={styles.tenantDetail}>
                     <span>Base Rent ({charge.daysOccupied}/{daysInMonth} days):</span>
@@ -80,12 +87,12 @@ export const BillSummaryCard = ({ room, bill, tenants, tenancies, onEdit, onReco
                     <span>TOTAL:</span>
                     <span>₹{charge.total.toLocaleString()}</span>
                   </div>
-                  {status !== 'paid' && status !== 'advance' && (
+                  {showPaymentButton && (
                     <div className={styles.actions}>
                       <Button 
                         variant="secondary" 
                         size="small" 
-                        onClick={() => onRecordPayment(bill, charge.tenantId, charge.total)}
+                        onClick={() => onRecordPayment(bill, charge.tenantId)}
                         style={{ padding: '6px 12px', fontSize: '0.8rem', width: '100%' }}
                       >
                         Record Payment

@@ -54,7 +54,7 @@ export const TenantDetail = ({ tenant, tenancies, rooms, activeTenancy, onOpenAs
             return (
               <div key={t.id} className={styles.historyItem}>
                 <div className={styles.historyHeader}>
-                  <span className={styles.roomName}>{room ? room.name : 'Unknown Room'}</span>
+                  <span className={styles.roomName}>{room ? `${room.name} (Floor ${room.floor})` : 'Unknown Room'}</span>
                   <Badge variant={t.status === 'active' ? 'active' : 'vacated'}>
                     {t.status.toUpperCase()}
                   </Badge>

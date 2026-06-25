@@ -45,7 +45,8 @@ export const BillDashboard = () => {
   };
 
   const handleSaveBill = (utilities) => {
-    const charges = generateCharges(tenancies, editingRoomId, currentMonth, utilities);
+    const utilitiesEnteredDate = utilities.isEntered ? new Date().toISOString() : null;
+    const charges = generateCharges(tenancies, editingRoomId, currentMonth, utilities, utilitiesEnteredDate);
     const existingBill = getBillForRoom(editingRoomId);
 
     const newBill = {
@@ -53,6 +54,7 @@ export const BillDashboard = () => {
       month: currentMonth,
       roomId: editingRoomId,
       utilities,
+      utilitiesEnteredDate,
       charges,
       payments: existingBill ? existingBill.payments : []
     };
@@ -61,16 +63,18 @@ export const BillDashboard = () => {
     setEditingRoomId(null);
   };
 
-  const handleRecordPayment = (payment) => {
-    dispatch({
-      type: 'ADD_PAYMENT',
-      payload: {
-        billId: paymentData.billId,
-        payment: {
-          tenantId: paymentData.tenantId,
-          ...payment
+  const handleRecordPayment = (paymentsToSave) => {
+    paymentsToSave.forEach(payment => {
+      dispatch({
+        type: 'ADD_PAYMENT',
+        payload: {
+          billId: paymentData.billId,
+          payment: {
+            tenantId: paymentData.tenantId,
+            ...payment
+          }
         }
-      }
+      });
     });
     setPaymentData(null);
   };
@@ -142,11 +146,8 @@ export const BillDashboard = () => {
               tenants={tenants}
               tenancies={tenancies}
               onEdit={(roomId) => setEditingRoomId(roomId)}
-              onRecordPayment={(bill, tenantId, amountDue) => {
-                const amountPaid = bill.payments
-                  .filter(p => p.tenantId === tenantId)
-                  .reduce((sum, p) => sum + p.amount, 0);
-                setPaymentData({ billId: bill.id, tenantId, amountDue, amountPaid });
+              onRecordPayment={(bill, tenantId) => {
+                setPaymentData({ billId: bill.id, tenantId });
               }}
             />
           ))}
@@ -179,8 +180,8 @@ export const BillDashboard = () => {
       >
         {paymentData && (
           <PaymentForm
-            amountDue={paymentData.amountDue}
-            amountPaid={paymentData.amountPaid}
+            bill={bills.find(b => b.id === paymentData.billId)}
+            tenantId={paymentData.tenantId}
             onSave={handleRecordPayment}
             onCancel={() => setPaymentData(null)}
           />

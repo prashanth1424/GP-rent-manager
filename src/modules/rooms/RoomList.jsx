@@ -5,9 +5,12 @@ import { getActiveTenantsForRoom } from '../../utils/calculations';
 import { PageHeader } from '../../components/layout/PageHeader';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/layout/Modal';
+import { ConfirmDialog } from '../../components/layout/ConfirmDialog';
 import { RoomCard } from './RoomCard';
 import { RoomForm } from './RoomForm';
 import { RoomDetail } from './RoomDetail';
+import { VacateTenantModal } from '../tenants/VacateTenantModal';
+import { generateId } from '../../utils/idGenerator';
 import styles from './RoomList.module.css';
 
 export const RoomList = () => {
@@ -17,6 +20,8 @@ export const RoomList = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [editingRoom, setEditingRoom] = useState(null);
+  const [vacatingTenantData, setVacatingTenantData] = useState(null);
+  const [coTenantPrompt, setCoTenantPrompt] = useState(null);
 
   const handleAddRoom = (roomData) => {
     if (editingRoom) {
@@ -32,6 +37,50 @@ export const RoomList = () => {
   const openEditForm = (room) => {
     setEditingRoom(room);
     setIsFormOpen(true);
+  };
+
+  const handleVacate = (updatedTenancy, coTenantData) => {
+    dispatch({ type: 'CLOSE_TENANCY', payload: updatedTenancy });
+    setVacatingTenantData(null);
+
+    if (coTenantData) {
+      setCoTenantPrompt({
+        type: 'absorb',
+        coTenant: coTenantData,
+        room: selectedRoom,
+        message: 'The co-tenant has left. Since the policy is "Remaining Tenant Pays Full", do you want to update this tenant\'s rent share to the full room amount?'
+      });
+    }
+  };
+
+  const handleCoTenantUpdate = () => {
+    if (!coTenantPrompt) return;
+
+    const { coTenant, room, type } = coTenantPrompt;
+    
+    // Close old record
+    const today = new Date().toISOString().split('T')[0];
+    dispatch({
+      type: 'CLOSE_TENANCY',
+      payload: { ...coTenant, endDate: today, depositRefunded: 0, depositDeductions: [] }
+    });
+
+    // Create new record
+    const newRent = type === 'split' ? room.defaultRent / 2 : room.defaultRent;
+    
+    dispatch({
+      type: 'CREATE_TENANCY',
+      payload: {
+        ...coTenant,
+        id: generateId('tenancy'),
+        startDate: today,
+        endDate: null,
+        agreedRent: newRent,
+        status: 'active'
+      }
+    });
+
+    setCoTenantPrompt(null);
   };
 
   return (
@@ -89,9 +138,31 @@ export const RoomList = () => {
             tenancies={tenancies} 
             tenants={tenants} 
             onEdit={() => openEditForm(selectedRoom)}
+            onVacateTenant={(tenant, tenancy) => setVacatingTenantData({ tenant, tenancy })}
           />
         )}
       </Modal>
+
+      {vacatingTenantData && (
+        <VacateTenantModal
+          isOpen={true}
+          onClose={() => setVacatingTenantData(null)}
+          tenant={vacatingTenantData.tenant}
+          activeTenancy={vacatingTenantData.tenancy}
+          room={selectedRoom}
+          tenancies={tenancies}
+          onVacate={handleVacate}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={!!coTenantPrompt}
+        onClose={() => setCoTenantPrompt(null)}
+        onConfirm={handleCoTenantUpdate}
+        title="Update Co-Tenant Rent"
+        message={coTenantPrompt?.message}
+        confirmText="Update Rent"
+      />
     </div>
   );
 };
